@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>实时转录软件</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 900px;
+            width: 100%;
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        
+        .main-content {
+            display: flex;
+            height: 600px;
+        }
+        
+        .control-panel {
+            width: 280px;
+            background: #f8f9fa;
+            border-right: 1px solid #e9ecef;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+        
+        .transcription-display {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .transcript-area {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            background: white;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        .transcript-entry {
+            margin-bottom: 15px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            border-radius: 4px;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        
+        .transcript-timestamp {
+            font-size: 12px;
+            color: #999;
+            margin-bottom: 5px;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .transcript-lang {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            margin-right: 8px;
+        }
+        
+        .transcript-text {
+            color: #333;
+            word-break: break-word;
+        }
+        
+        .status-bar {
+            padding: 15px 20px;
+            background: #f8f9fa;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 13px;
+            color: #666;
+        }
+        
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #ccc;
+            animation: none;
+        }
+        
+        .status-dot.recording {
+            background: #28a745;
+            animation: pulse 1s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .section {
+            margin-bottom: 20px;
+        }
+        
+        .section-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 8px;
+            flex-direction: column;
+        }
+        
+        button {
+            padding: 12px 16px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+        
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+        
+        .btn-danger:hover:not(:disabled) {
+            background: #c82333;
+            transform: translateY(-2px);
+        }
+        
+        .btn-secondary {
+            background: #e9ecef;
+            color: #333;
+        }
+        
+        .btn-secondary:hover {
+            background: #dee2e6;
+        }
+        
+        .select-control {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            font-size: 13px;
+            background: white;
+            cursor: pointer;
+        }
+        
+        .info-box {
+            background: #e7f3ff;
+            border-left: 4px solid #667eea;
+            padding: 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            color: #333;
+            line-height: 1.5;
+        }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .stat-item {
+            background: white;
+            padding: 10px;
+            border-radius: 4px;
+            border: 1px solid #e9ecef;
+            text-align: center;
+            font-size: 12px;
+        }
+        
+        .stat-value {
+            font-size: 18px;
+            font-weight: 600;
+            color: #667eea;
+            margin-bottom: 2px;
+        }
+        
+        .stat-label {
+            color: #999;
+        }
+        
+        .error-message {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            font-size: 13px;
+        }
+        
+        .success-message {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            font-size: 13px;
+        }
+        
+        .clear-button {
+            width: 100%;
+            padding: 8px;
+            background: #6c757d;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+        }
+        
+        .clear-button:hover {
+            background: #5a6268;
+        }
+        
+        @media (max-width: 768px) {
+            .main-content {
+                flex-direction: column;
+                height: auto;
+            }
+            
+            .control-panel {
+                width: 100%;
+                border-right: none;
+                border-bottom: 1px solid #e9ecef;
+                max-height: 300px;
+            }
+            
+            .transcript-area {
+                height: 300px;
+            }
+            
+            .header h1 {
+                font-size: 22px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎙️ 实时转录软件</h1>
+            <p>支持多语言自动识别和混合语言转录</p>
+        </div>
+        
+        <div class="main-content">
+            <!-- 控制面板 -->
+            <div class="control-panel">
+                <!-- 状态消息 -->
+                <div id="messageContainer"></div>
+                
+                <!-- 启动/停止 -->
+                <div class="section">
+                    <div class="button-group">
+                        <button id="startBtn" class="btn-primary" onclick="startTranscription()">
+                            ▶️ 开始转录
+                        </button>
+                        <button id="stopBtn" class="btn-danger" onclick="stopTranscription()" disabled>
+                            ⏹️ 停止转录
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- 设置 -->
+                <div class="section">
+                    <div class="section-title">音源选择</div>
+                    <select id="sourceSelect" class="select-control" onchange="updateSource()">
+                        <option value="mic">麦克风</option>
+                        <option value="system">系统声音</option>
+                        <option value="both">麦克风 + 系统声音</option>
+                    </select>
+                </div>
+                
+                <!-- 语言设置 -->
+                <div class="section">
+                    <div class="section-title">语言设置</div>
+                    <select id="languageSelect" class="select-control" onchange="updateLanguage()">
+                        <option value="auto">自动检测 (推荐)</option>
+                        <option value="zh">中文</option>
+                        <option value="en">English</option>
+                        <option value="ja">日本語</option>
+                        <option value="ko">한국어</option>
+                        <option value="fr">Français</option>
+                        <option value="de">Deutsch</option>
+                        <option value="es">Español</option>
+                    </select>
+                </div>
+                
+                <!-- 模型选择 -->
+                <div class="section">
+                    <div class="section-title">模型选择</div>
+                    <select id="modelSelect" class="select-control" onchange="updateModel()">
+                        <option value="tiny">Tiny (最快)</option>
+                        <option value="base" selected>Base (推荐)</option>
+                        <option value="small">Small</option>
+                        <option value="medium">Medium</option>
+                        <option value="large">Large (最精准)</option>
+                    </select>
+                </div>
+                
+                <!-- 统计信息 -->
+                <div class="section">
+                    <div class="section-title">统计</div>
+                    <div class="stats">
+                        <div class="stat-item">
+                            <div class="stat-value" id="entryCount">0</div>
+                            <div class="stat-label">文本条数</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="timeElapsed">00:00</div>
+                            <div class="stat-label">运行时间</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 操作 -->
+                <div class="section">
+                    <div class="button-group">
+                        <button class="btn-secondary" onclick="clearTranscript()">
+                            🗑️ 清空屏幕
+                        </button>
+                        <button class="btn-secondary" onclick="downloadTranscript()">
+                            💾 下载文本
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- 信息 -->
+                <div class="section">
+                    <div class="info-box">
+                        <strong>提示:</strong><br>
+                        • 自动检测语言模式下可识别混合语言<br>
+                        • 转录内容实时保存到文本文件<br>
+                        • 文件位置: recordings 文件夹
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 转录显示区域 -->
+            <div class="transcription-display">
+                <div class="transcript-area" id="transcriptArea">
+                    <div style="color: #999; text-align: center; margin-top: 20px;">
+                        点击"开始转录"按钮开始...
+                    </div>
+                </div>
+                <div class="status-bar">
+                    <div class="status-indicator">
+                        <div class="status-dot" id="statusDot"></div>
+                        <span id="statusText">就绪</span>
+                    </div>
+                    <span id="currentTime"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let isRecording = false;
+        let entryCount = 0;
+        let startTime = null;
+        let sessionFilename = null;
+        let eventSource = null;
+        
+        // 更新时钟
+        function updateClock() {
+            const now = new Date();
+            document.getElementById('currentTime').textContent = 
+                now.toLocaleTimeString('zh-CN');
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+        
+        // 更新运行时间
+        function updateElapsedTime() {
+            if (!startTime) return;
+            
+            const elapsed = Math.floor((Date.now() - startTime) / 1000);
+            const minutes = Math.floor(elapsed / 60);
+            const seconds = elapsed % 60;
+            document.getElementById('timeElapsed').textContent = 
+                `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+        }
+        setInterval(updateElapsedTime, 1000);
+        
+        // 显示消息
+        function showMessage(message, type = 'info') {
+            const container = document.getElementById('messageContainer');
+            const className = type === 'error' ? 'error-message' : 'success-message';
+            const div = document.createElement('div');
+            div.className = className;
+            div.textContent = message;
+            container.innerHTML = '';
+            container.appendChild(div);
+            
+            setTimeout(() => {
+                div.remove();
+            }, 3000);
+        }
+        
+        // 开始转录
+        async function startTranscription() {
+            try {
+                const response = await fetch('/api/start', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        source: document.getElementById('sourceSelect').value
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    isRecording = true;
+                    entryCount = 0;
+                    startTime = Date.now();
+                    
+                    document.getElementById('startBtn').disabled = true;
+                    document.getElementById('stopBtn').disabled = false;
+                    document.getElementById('statusDot').classList.add('recording');
+                    document.getElementById('statusText').textContent = '录制中...';
+                    document.getElementById('transcriptArea').innerHTML = '';
+                    
+                    showMessage('转录已启动', 'success');
+                    
+                    // 连接 Server-Sent Events
+                    connectToTranscriptionStream();
+                } else {
+                    showMessage('启动失败: ' + data.message, 'error');
+                }
+            } catch (error) {
+                showMessage('错误: ' + error.message, 'error');
+            }
+        }
+        
+        // 停止转录
+        async function stopTranscription() {
+            try {
+                const response = await fetch('/api/stop', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    isRecording = false;
+                    
+                    document.getElementById('startBtn').disabled = false;
+                    document.getElementById('stopBtn').disabled = true;
+                    document.getElementById('statusDot').classList.remove('recording');
+                    document.getElementById('statusText').textContent = '已停止';
+                    
+                    if (eventSource) {
+                        eventSource.close();
+                    }
+                    
+                    showMessage('转录已停止，文件已保存', 'success');
+                } else {
+                    showMessage('停止失败: ' + data.message, 'error');
+                }
+            } catch (error) {
+                showMessage('错误: ' + error.message, 'error');
+            }
+        }
+        
+        // 连接到转录流
+        function connectToTranscriptionStream() {
+            eventSource = new EventSource('/api/transcriptions');
+            
+            eventSource.onmessage = (event) => {
+                try {
+                    const data = JSON.parse(event.data);
+                    
+                    if (data.type === 'transcription') {
+                        addTranscriptionEntry(data);
+                    } else if (data.type === 'error') {
+                        showMessage('转录错误: ' + data.message, 'error');
+                    }
+                } catch (e) {
+                    console.error('解析数据失败:', e);
+                }
+            };
+            
+            eventSource.onerror = () => {
+                console.error('连接错误');
+                if (eventSource) {
+                    eventSource.close();
+                }
+            };
+        }
+        
+        // 添加转录条目
+        function addTranscriptionEntry(data) {
+            const area = document.getElementById('transcriptArea');
+            
+            // 如果是第一个条目，清空占位符
+            if (entryCount === 0) {
+                area.innerHTML = '';
+            }
+            
+            const entry = document.createElement('div');
+            entry.className = 'transcript-entry';
+            
+            const timestamp = new Date(data.timestamp).toLocaleTimeString('zh-CN');
+            const lang = data.language || 'auto';
+            
+            entry.innerHTML = `
+                <div class="transcript-timestamp">${timestamp}</div>
+                <span class="transcript-lang">${lang.toUpperCase()}</span>
+                <div class="transcript-text">${escapeHtml(data.text)}</div>
+            `;
+            
+            area.appendChild(entry);
+            area.scrollTop = area.scrollHeight;
+            
+            entryCount++;
+            document.getElementById('entryCount').textContent = entryCount;
+        }
+        
+        // 清空转录
+        function clearTranscript() {
+            if (confirm('确定要清空屏幕上的转录内容吗？')) {
+                document.getElementById('transcriptArea').innerHTML = 
+                    '<div style="color: #999; text-align: center; margin-top: 20px;">内容已清空（文件中仍有数据）</div>';
+            }
+        }
+        
+        // 下载转录文本
+        async function downloadTranscript() {
+            try {
+                const response = await fetch('/api/status');
+                const data = await response.json();
+                
+                if (data.current_session && data.current_session.filename) {
+                    const filename = data.current_session.filename;
+                    window.location.href = `/api/download/${filename}`;
+                } else {
+                    showMessage('没有可下载的文件', 'error');
+                }
+            } catch (error) {
+                showMessage('下载失败: ' + error.message, 'error');
+            }
+        }
+        
+        // 更新音源
+        async function updateSource() {
+            if (isRecording) {
+                showMessage('运行中无法更改音源', 'error');
+                return;
+            }
+        }
+        
+        // 更新语言
+        async function updateLanguage() {
+            if (isRecording) {
+                showMessage('运行中无法更改语言', 'error');
+                return;
+            }
+        }
+        
+        // 更新模型
+        async function updateModel() {
+            if (isRecording) {
+                showMessage('运行中无法更改模型', 'error');
+                return;
+            }
+        }
+        
+        // HTML转义
+        function escapeHtml(text) {
+            const map = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            };
+            return text.replace(/[&<>"']/g, m => map[m]);
+        }
+        
+        // 页面加载
+        window.addEventListener('load', () => {
+            updateClock();
+            updateElapsedTime();
+        });
+    </script>
+</body>
+</html>

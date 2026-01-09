@@ -1,0 +1,24 @@
+"""
+requirements.txt - 项目依赖
+"""
+# 核心依赖
+Flask==2.3.3
+Flask-CORS==4.0.0
+
+# 音频处理
+sounddevice==0.4.6
+numpy==1.24.3
+librosa==0.10.0
+scipy==1.11.2
+
+# Whisper
+openai-whisper==20230314
+
+# PyTorch (可选，用于GPU加速)
+# 安装方法: pip install torch torchvision --index-url https://download.pytorch.org/whl/cu128
+# torch==2.0.1
+# torchvision==0.15.2
+
+# 其他工具
+python-dotenv==1.0.0
+requests==2.31.0
