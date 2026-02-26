@@ -1,0 +1,70 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+*.whl
+
+# 虚拟环境
+.venv/
+venv/
+env/
+.env
+
+# 模型文件（体积大，不提交）
+*.pt
+*.bin
+*.ckpt
+*.safetensors
+*.onnx
+
+# 音频文件
+*.mp3
+*.wav
+*.m4a
+*.flac
+*.ogg
+*.webm
+*.aac
+*.wma
+
+# 视频文件
+*.mp4
+*.mkv
+*.avi
+*.mov
+*.wmv
+
+# 输出文件
+*.csv
+*.txt
+!**/requirements.txt
+!**/onetab_prompt.txt
+
+# 截图 / 截图缓存
+*.png
+*.jpg
+*.jpeg
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# 系统文件
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# 日志
+*.log
+logs/
+
+# 录音目录
+realtime_transcriber/recordings/
