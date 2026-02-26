@@ -1,0 +1,17 @@
+# 音频转文字（含说话人识别）依赖包
+
+# WhisperX（替代原生 Whisper，包含对齐和说话人分离）
+whisperx
+
+# 说话人分离核心库
+pyannote.audio>=3.1.0
+
+# 繁简转换（确保输出简体中文）
+opencc-python-reimplemented>=0.1.7
+
+# 注意：
+#   1. 需要 CUDA 环境建议先安装 GPU 版 PyTorch:
+#      pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+#
+#   2. 说话人识别需要申请 HuggingFace Token 并接受协议:
+#      https://huggingface.co/pyannote/speaker-diarization-3.1

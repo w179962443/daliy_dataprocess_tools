@@ -1,0 +1,51 @@
+services:
+
+  # ── 基础转录（openai-whisper，无说话人识别）──────────────────
+  transcribe:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: audio-transcribe:latest
+    runtime: nvidia                      # 启用 GPU，无 GPU 时删除此行
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=compute,utility
+    volumes:
+      - ./data:/data                     # 音频放这里，结果也输出到这里
+      - whisper-models:/root/.cache/whisper   # 模型缓存（避免重复下载）
+      - hf-cache:/root/.cache/huggingface
+    working_dir: /data
+    command: >
+      python /app/audio_to_text.py
+      ${AUDIO_FILE:-audio.mp3}
+      -m ${MODEL:-turbo}
+      -l ${LANG:-zh}
+      ${EXTRA_ARGS:-}
+
+  # ── 含说话人识别（WhisperX + pyannote）─────────────────────
+  diarize:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: audio-transcribe:latest
+    runtime: nvidia                      # 启用 GPU，无 GPU 时删除此行
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=compute,utility
+      - HF_TOKEN=${HF_TOKEN:-}           # 在 .env 文件中设置
+    volumes:
+      - ./data:/data
+      - whisper-models:/root/.cache/whisper
+      - hf-cache:/root/.cache/huggingface
+    working_dir: /data
+    command: >
+      python /app/audio_to_text_diarize.py
+      ${AUDIO_FILE:-audio.mp3}
+      -m ${MODEL:-turbo}
+      -l ${LANG:-zh}
+      -t ${HF_TOKEN:-}
+      ${EXTRA_ARGS:-}
+
+volumes:
+  whisper-models:
+  hf-cache:

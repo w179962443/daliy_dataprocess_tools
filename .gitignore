@@ -15,6 +15,7 @@ build/
 venv/
 env/
 .env
+# .env.example 保留（不含敏感信息）
 
 # 模型文件（体积大，不提交）
 *.pt
@@ -44,6 +45,7 @@ env/
 *.csv
 *.txt
 !**/requirements.txt
+!**/audio_to_text_diarize_requirements.txt
 !**/onetab_prompt.txt
 
 # 截图 / 截图缓存
