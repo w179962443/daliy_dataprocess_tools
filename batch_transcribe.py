@@ -96,8 +96,11 @@ def main():
   # 指定目录，递归子目录
   python batch_transcribe.py D:\\recordings -r
 
-  # 指定模型和语言
+  # 指定模型和语言（中文）
   python batch_transcribe.py D:\\recordings -m turbo -l zh
+
+  # 转录英文内容
+  python batch_transcribe.py D:\\recordings -m turbo -l en
 
   # 指定模型缓存目录
   python batch_transcribe.py D:\\recordings -m turbo -l zh -d D:\\whisper_models
@@ -123,6 +126,7 @@ def main():
         "-l",
         "--language",
         default="zh",
+        choices=["zh", "en", "auto"],
         help="语言代码 (zh=简体中文, en=英文, auto=自动检测, 默认: zh)",
     )
     parser.add_argument(

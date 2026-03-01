@@ -1,0 +1,2 @@
+python batch_transcribe.py "D:\Yes Minister & Yes Prime Minister Complete.x264\Yes,Minister.1980-1984.D5\S01 (1980)" -l en
+
